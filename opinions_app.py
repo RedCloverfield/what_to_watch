@@ -3,10 +3,14 @@ from random import randrange
 
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField, TextAreaField, URLField
+from wtforms.validators import DataRequired, Length, Optional
 
 app = Flask(__name__)
 # Подключаем БД SQLite:
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
+app.config['SECRET_KEY'] = 'PR0J3C7_$3CR37_K3Y'
 # Создаём экземпляр SQLAlchemy и в качестве параметра
 # передаём в него экземпляр приложения Flask:
 db = SQLAlchemy(app)
@@ -20,6 +24,23 @@ class Opinion(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
 
+class OpinionForm(FlaskForm):
+    title = StringField(
+        'Введите название фильма',
+        validators=[DataRequired(message='Обязательное поле'),
+                    Length(1, 128)]
+    )
+    text = TextAreaField(
+        'Напишите мнение',
+        validators=[DataRequired(message='Обязательное поле')]
+    )
+    source = URLField(
+        'Добавьте ссылку на подробный обзор фильма',
+        validators=[Length(1, 256), Optional()]
+    )
+    submit = SubmitField('Добавить')
+
+
 @app.route('/')
 def index_view():
     quantity = Opinion.query.count()
@@ -30,9 +51,10 @@ def index_view():
     return render_template('opinion.html', opinion=opinion)
 
 
-@app.route('/add')
+@app.route('/add', methods=['GET', 'POST'])
 def add_opinion_view():
-    return render_template('add_opinion.html')
+    form = OpinionForm()
+    return render_template('add_opinion.html', form=form)
 
 
 @app.route('/opinions/<int:id>')
