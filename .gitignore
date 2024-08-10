@@ -131,3 +131,6 @@ dmypy.json
 .vscode
 
 .idea
+
+# Old version
+old_opinions_app.py
